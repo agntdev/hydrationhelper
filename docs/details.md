@@ -1,4 +1,4 @@
-# DETAILS: HydrationHelper Implementation Specification
+# DETAILS: HydrationHelper Implementation Specification (Revised)
 
 ## SCREENS
 
@@ -14,9 +14,9 @@
   [📍 Use Telegram TZ] [🌍 UTC] [⌨ Custom…]
   ```
 - **Transitions**:
-  - `tz:auto` → `tz:auto` callback → set user's timezone from Telegram → show main menu
-  - `tz:utc` → set UTC → show main menu
-  - `tz:custom` → prompt for `±HH:MM` input → validate → update user record
+  - `tz:auto` → set user's timezone from Telegram → show main menu with one-time nudge
+  - `tz:utc` → set UTC → show main menu with one-time nudge
+  - `tz:custom` → prompt for `±HH:MM` input (e.g., +03:00) → validate → update user record
 
 ### 2. Main Menu (Default)
 - **Trigger**: Shown after onboarding, or `/start` (existing user)
@@ -24,6 +24,7 @@
   ```
   💧 Hydration Tracker
   Today: {current_ml}/{goal_ml} ml ({percent}%)
+  I'll nudge you every 2 hours between 08:00 and 20:00. /reminders off to silence.
   ```
 - **Keyboard**: 
   ```markdown
@@ -35,6 +36,8 @@
   - `log:custom` → prompt for amount (1-2000ml)
   - `stats:open` → show stats screen
   - `reminders:toggle` → flip `reminders_enabled` flag → update button state
+  - `/reminders on` → enable reminders → update button state
+  - `/reminders off` → disable reminders → update button state
 
 ### 3. Custom Log Input
 - **Trigger**: `🥤 Custom…` button
@@ -48,7 +51,7 @@
   ```
 - **Transitions**:
   - Valid number → log amount → return to main menu with progress
-  - Invalid → error message → re-prompt
+  - Invalid → error message "Please enter a number between 1 and 2000" → re-prompt
   - `/cancel` → return to main menu
 
 ### 4. Stats Screen
@@ -68,7 +71,27 @@
 - **Transitions**:
   - `🏠 Меню` → return to main menu
 
-### 5. Goal Setting
+### 5. Help Screen
+- **Trigger**: `/help`
+- **Message**: 
+  ```
+  📚 Available Commands:
+  /drank <ml> - Log water intake
+  /stats - View weekly chart
+  /goal <ml> - Set daily goal (500–6000)
+  /reminders on/off - Toggle reminders
+  /balance - Show $SIP balance
+  Use the buttons below for quick actions.
+  ```
+- **Keyboard**: 
+  ```markdown
+  [💧 250 ml] [🏠 Меню]
+  ```
+- **Transitions**:
+  - `log:250` → log 250ml → return to main menu
+  - `🏠 Меню` → return to main menu
+
+### 6. Goal Setting
 - **Trigger**: `/goal <ml>` or inline command
 - **Message**: 
   ```
@@ -79,10 +102,10 @@
   [🏠 Меню]
   ```
 - **Transitions**:
-  - Invalid ML → error message → re-prompt
+  - Invalid ML → error message "Goal must be between 500 and 6000 ml" → re-prompt
   - Valid ML → update `daily_goal_ml` → return to main menu
 
-### 6. Balance Screen
+### 7. Balance Screen
 - **Trigger**: `/balance`
 - **Message**: 
   ```
@@ -99,7 +122,7 @@
 - **Transitions**:
   - `🏠 Меню` → return to main menu
 
-### 7. Error Handling
+### 8. Error Handling
 - **Trigger**: Unknown command, invalid input
 - **Message**: 
   ```
@@ -151,9 +174,12 @@
 | Main Menu | `log:custom` | Custom Log Input | Await user input |
 | Main Menu | `stats:open` | Stats Screen | Generate chart |
 | Main Menu | `reminders:toggle` | Main Menu | Flip `reminders_enabled` |
+| Main Menu | `/reminders on` | Main Menu | Set `reminders_enabled=true` |
+| Main Menu | `/reminders off` | Main Menu | Set `reminders_enabled=false` |
 | Custom Log Input | Valid ML | Main Menu | Insert `water_logs`, update totals |
 | Custom Log Input | `/cancel` | Main Menu | Cancel input |
 | Reminder Schedule | Hourly tick (08:00–20:00) | Reminder Message | Send if `reminders_enabled` |
+| Any State | `/help` | Help Screen | Show command reference |
 | Any State | `/balance` | Balance Screen | Fetch and display $SIP balance |
 
 ---
@@ -237,3 +263,11 @@
    - Tokens are off-chain in v1 (no blockchain).
    - Balance is sum of `sip_grants.amount`.
    - Grants are idempotent per user and milestone.
+
+7. **/help Command**:
+   - Lists all available commands with brief descriptions.
+   - Provides quick access to 250ml log button.
+
+8. **/reminders Commands**:
+   - Both `/reminders on` and `/reminders off` toggle the flag.
+   - Inline button and slash commands are functionally equivalent.
