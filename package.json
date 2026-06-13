@@ -8,5 +8,10 @@
   },
   "devDependencies": {
     "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@types/sql.js": "^1.4.11",
+    "grammy": "^1.43.0",
+    "sql.js": "^1.14.1"
   }
 }
